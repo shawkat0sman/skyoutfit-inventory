@@ -1,5 +1,16 @@
 import { useState, useEffect } from "react";
 
+// responsive hook
+function useIsMobile() {
+  const [mob, setMob] = useState(()=>window.innerWidth < 768);
+  useEffect(()=>{
+    const fn = ()=>setMob(window.innerWidth < 768);
+    window.addEventListener("resize", fn);
+    return ()=>window.removeEventListener("resize", fn);
+  },[]);
+  return mob;
+}
+
 const STORAGE_KEY = "skyoutfit-inventory-v2";
 const AUTH_KEY    = "skyoutfit-auth-users";
 const SESSION_KEY = "skyoutfit-session";
@@ -385,6 +396,14 @@ function LoginScreen({ onLogin }) {
   return (
     <div style={{ minHeight:"100vh", background:"linear-gradient(135deg,#1B3A6B 0%,#2d5aa0 50%,#4A90D9 100%)", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'DM Sans','Segoe UI',sans-serif", padding:"1rem" }}>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+      {/* ensure viewport meta exists */}
+      {useEffect(()=>{
+        if(!document.querySelector('meta[name="viewport"]')){
+          const m=document.createElement('meta');
+          m.name='viewport';m.content='width=device-width,initial-scale=1';
+          document.head.appendChild(m);
+        }
+      },[])||null}
       <div style={{ width:"100%", maxWidth:"400px" }}>
         {/* Logo */}
         <div style={{ textAlign:"center", marginBottom:"2rem" }}>
@@ -600,6 +619,8 @@ export default function App() {
   const [loaded,setLoaded]=useState(false);
   const [currentUser,setCurrentUser]=useState(()=>getSession());
   const [showUserMgr,setShowUserMgr]=useState(false);
+  const [mobileMenu,setMobileMenu]=useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(()=>{const d=loadData();setData(d||SEED);setLoaded(true);},[]);
   useEffect(()=>{if(loaded&&data)saveData(data);},[data,loaded]);
@@ -669,61 +690,112 @@ export default function App() {
   return (
     <div style={{minHeight:"100vh",background:"#EFF3FA",fontFamily:"'DM Sans','Segoe UI',sans-serif"}}>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+      {/* ensure viewport meta exists */}
+      {useEffect(()=>{
+        if(!document.querySelector('meta[name="viewport"]')){
+          const m=document.createElement('meta');
+          m.name='viewport';m.content='width=device-width,initial-scale=1';
+          document.head.appendChild(m);
+        }
+      },[])||null}
 
       {/* HEADER */}
-      <header style={{background:C.navy,padding:"0 1.4rem",display:"flex",alignItems:"center",justifyContent:"space-between",height:"56px",position:"sticky",top:0,zIndex:50,boxShadow:"0 2px 20px rgba(0,0,0,0.2)"}}>
-        <div style={{display:"flex",alignItems:"center",gap:"0.65rem"}}>
-          <div style={{background:C.sky,borderRadius:"7px",width:"29px",height:"29px",display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <span style={{color:"#fff",fontFamily:"'DM Sans','Segoe UI',sans-serif",fontWeight:800,fontSize:"0.78rem"}}>S</span>
+      <header style={{background:C.navy,padding:"0 1rem",display:"flex",alignItems:"center",justifyContent:"space-between",height:"56px",position:"sticky",top:0,zIndex:50,boxShadow:"0 2px 20px rgba(0,0,0,0.2)"}}>
+        {/* Logo */}
+        <div style={{display:"flex",alignItems:"center",gap:"0.55rem",flexShrink:0}}>
+          <div style={{background:C.sky,borderRadius:"7px",width:"28px",height:"28px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <span style={{color:"#fff",fontWeight:800,fontSize:"0.78rem"}}>S</span>
           </div>
           <div>
-            <span style={{color:C.sky,fontFamily:"'DM Sans','Segoe UI',sans-serif",fontWeight:800,fontSize:"0.98rem"}}>SKY</span>
-            <span style={{color:"#fff",fontFamily:"'DM Sans','Segoe UI',sans-serif",fontWeight:800,fontSize:"0.98rem"}}>OUTFIT</span>
-            <span style={{color:"#7fa8d4",fontSize:"0.68rem",marginLeft:"0.4rem"}}>IMS</span>
+            <span style={{color:C.sky,fontWeight:800,fontSize:"0.95rem"}}>SKY</span>
+            <span style={{color:"#fff",fontWeight:800,fontSize:"0.95rem"}}>OUTFIT</span>
+            {!isMobile&&<span style={{color:"#7fa8d4",fontSize:"0.65rem",marginLeft:"0.35rem"}}>IMS</span>}
           </div>
         </div>
-        <nav style={{display:"flex",gap:"0.1rem"}}>
-          {NAV.map(n=>(
-            <button key={n.id} onClick={()=>setTab(n.id)} style={{padding:"0.4rem 0.9rem",borderRadius:"6px",border:"none",background:tab===n.id?"rgba(74,144,217,0.22)":"transparent",color:tab===n.id?C.sky:"#7fa8d4",fontWeight:600,fontSize:"0.78rem",cursor:"pointer",display:"flex",alignItems:"center",gap:"0.35rem",transition:"all 0.15s",position:"relative",fontFamily:"inherit",whiteSpace:"nowrap"}}>
-              <n.icon/>{n.label}
-              {n.id==="upcoming"&&pendingOrders>0&&<span style={{position:"absolute",top:"2px",right:"2px",background:"#f59e0b",color:C.navy,fontSize:"0.58rem",fontWeight:800,borderRadius:"20px",padding:"0 4px",lineHeight:"14px"}}>{pendingOrders}</span>}
+
+        {/* Desktop nav */}
+        {!isMobile&&(
+          <nav style={{display:"flex",gap:"0.1rem"}}>
+            {NAV.map(n=>(
+              <button key={n.id} onClick={()=>setTab(n.id)} style={{padding:"0.4rem 0.85rem",borderRadius:"6px",border:"none",background:tab===n.id?"rgba(74,144,217,0.22)":"transparent",color:tab===n.id?C.sky:"#7fa8d4",fontWeight:600,fontSize:"0.76rem",cursor:"pointer",display:"flex",alignItems:"center",gap:"0.3rem",transition:"all 0.15s",position:"relative",fontFamily:"inherit",whiteSpace:"nowrap"}}>
+                <n.icon/>{n.label}
+                {n.id==="upcoming"&&pendingOrders>0&&<span style={{position:"absolute",top:"2px",right:"2px",background:"#f59e0b",color:C.navy,fontSize:"0.55rem",fontWeight:800,borderRadius:"20px",padding:"0 4px",lineHeight:"14px"}}>{pendingOrders}</span>}
+              </button>
+            ))}
+          </nav>
+        )}
+
+        {/* Desktop right actions */}
+        {!isMobile&&(
+          <div style={{display:"flex",gap:"0.4rem",alignItems:"center"}}>
+            <button onClick={()=>{setEditTarget(null);setModal("addUpcoming");}} style={{padding:"0.38rem 0.75rem",background:"rgba(74,144,217,0.18)",color:C.sky,border:"1px solid rgba(74,144,217,0.35)",borderRadius:"7px",fontWeight:700,fontSize:"0.74rem",cursor:"pointer",display:"flex",alignItems:"center",gap:"0.3rem"}}>
+              <Ic.incoming/>Incoming
             </button>
-          ))}
-        </nav>
-        <div style={{display:"flex",gap:"0.45rem",alignItems:"center"}}>
-          <button onClick={()=>{setEditTarget(null);setModal("addUpcoming");}} style={{padding:"0.4rem 0.85rem",background:"rgba(74,144,217,0.18)",color:C.sky,border:"1px solid rgba(74,144,217,0.35)",borderRadius:"7px",fontWeight:700,fontSize:"0.76rem",cursor:"pointer",display:"flex",alignItems:"center",gap:"0.3rem"}}>
-            <Ic.incoming/>Incoming
-          </button>
-          <button onClick={()=>setModal("addTx")} style={{padding:"0.4rem 0.85rem",background:C.gold,color:C.navy,border:"none",borderRadius:"7px",fontWeight:700,fontSize:"0.76rem",cursor:"pointer",display:"flex",alignItems:"center",gap:"0.3rem"}}>
-            <Ic.plus/>Transaction
-          </button>
-          {/* divider */}
-          <div style={{width:"1px",height:"22px",background:"rgba(255,255,255,0.15)",margin:"0 0.2rem"}}/>
-          {/* user pill */}
-          <div style={{display:"flex",alignItems:"center",gap:"0.5rem",background:"rgba(255,255,255,0.08)",borderRadius:"8px",padding:"0.3rem 0.7rem"}}>
-            <div style={{width:"24px",height:"24px",borderRadius:"50%",background:C.sky,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:"0.72rem",flexShrink:0}}>
-              {currentUser.name.charAt(0).toUpperCase()}
+            <button onClick={()=>setModal("addTx")} style={{padding:"0.38rem 0.75rem",background:C.gold,color:C.navy,border:"none",borderRadius:"7px",fontWeight:700,fontSize:"0.74rem",cursor:"pointer",display:"flex",alignItems:"center",gap:"0.3rem"}}>
+              <Ic.plus/>Transaction
+            </button>
+            <div style={{width:"1px",height:"20px",background:"rgba(255,255,255,0.15)",margin:"0 0.1rem"}}/>
+            <div style={{display:"flex",alignItems:"center",gap:"0.45rem",background:"rgba(255,255,255,0.08)",borderRadius:"8px",padding:"0.28rem 0.65rem"}}>
+              <div style={{width:"22px",height:"22px",borderRadius:"50%",background:C.sky,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:"0.68rem",flexShrink:0}}>{currentUser.name.charAt(0).toUpperCase()}</div>
+              <div>
+                <div style={{fontSize:"0.7rem",fontWeight:700,color:"#fff",lineHeight:1}}>{currentUser.name}</div>
+                <div style={{fontSize:"0.58rem",color:"rgba(255,255,255,0.5)",textTransform:"uppercase",letterSpacing:"0.05em"}}>{currentUser.role}</div>
+              </div>
             </div>
-            <div>
-              <div style={{fontSize:"0.72rem",fontWeight:700,color:"#fff",lineHeight:1}}>{currentUser.name}</div>
-              <div style={{fontSize:"0.6rem",color:"rgba(255,255,255,0.5)",textTransform:"uppercase",letterSpacing:"0.05em"}}>{currentUser.role}</div>
-            </div>
+            {currentUser.role==="admin"&&<button onClick={()=>setShowUserMgr(true)} style={{padding:"0.32rem 0.65rem",background:"rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.8)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:"7px",fontWeight:600,fontSize:"0.7rem",cursor:"pointer"}}>👥 Users</button>}
+            <button onClick={()=>{clearSession();setCurrentUser(null);}} style={{padding:"0.32rem 0.65rem",background:"rgba(239,68,68,0.15)",color:"#fca5a5",border:"1px solid rgba(239,68,68,0.25)",borderRadius:"7px",fontWeight:600,fontSize:"0.7rem",cursor:"pointer"}}>Sign Out</button>
           </div>
-          {currentUser.role==="admin"&&(
-            <button onClick={()=>setShowUserMgr(true)} style={{padding:"0.35rem 0.7rem",background:"rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.8)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:"7px",fontWeight:600,fontSize:"0.72rem",cursor:"pointer"}}>
-              👥 Users
+        )}
+
+        {/* Mobile right: quick actions + hamburger */}
+        {isMobile&&(
+          <div style={{display:"flex",gap:"0.4rem",alignItems:"center"}}>
+            <button onClick={()=>setModal("addTx")} style={{padding:"0.38rem 0.7rem",background:C.gold,color:C.navy,border:"none",borderRadius:"7px",fontWeight:700,fontSize:"0.72rem",cursor:"pointer",display:"flex",alignItems:"center",gap:"0.25rem"}}>
+              <Ic.plus/>Tx
             </button>
-          )}
-          <button onClick={()=>{clearSession();setCurrentUser(null);}} style={{padding:"0.35rem 0.7rem",background:"rgba(239,68,68,0.15)",color:"#fca5a5",border:"1px solid rgba(239,68,68,0.25)",borderRadius:"7px",fontWeight:600,fontSize:"0.72rem",cursor:"pointer"}}>
-            Sign Out
-          </button>
-        </div>
+            <button onClick={()=>setMobileMenu(v=>!v)} style={{background:"rgba(255,255,255,0.1)",border:"none",borderRadius:"7px",padding:"0.38rem 0.5rem",cursor:"pointer",color:"#fff",display:"flex",flexDirection:"column",gap:"4px",alignItems:"center",justifyContent:"center"}}>
+              <div style={{width:"17px",height:"2px",background:"#fff",borderRadius:"2px"}}/>
+              <div style={{width:"17px",height:"2px",background:"#fff",borderRadius:"2px"}}/>
+              <div style={{width:"17px",height:"2px",background:"#fff",borderRadius:"2px"}}/>
+            </button>
+          </div>
+        )}
       </header>
 
-      <main style={{padding:"1.4rem 1.5rem",maxWidth:"1400px",margin:"0 auto"}}>
+      {/* Mobile Drawer Menu */}
+      {isMobile&&mobileMenu&&(
+        <div style={{position:"fixed",inset:0,zIndex:90}} onClick={()=>setMobileMenu(false)}>
+          <div style={{position:"absolute",top:"56px",right:0,width:"240px",background:C.navy,boxShadow:"-4px 0 20px rgba(0,0,0,0.3)",minHeight:"calc(100vh - 56px)",padding:"1rem",display:"flex",flexDirection:"column",gap:"0.3rem"}} onClick={e=>e.stopPropagation()}>
+            {NAV.map(n=>(
+              <button key={n.id} onClick={()=>{setTab(n.id);setMobileMenu(false);}} style={{padding:"0.7rem 0.9rem",borderRadius:"8px",border:"none",background:tab===n.id?"rgba(74,144,217,0.22)":"transparent",color:tab===n.id?C.sky:"#7fa8d4",fontWeight:600,fontSize:"0.85rem",cursor:"pointer",display:"flex",alignItems:"center",gap:"0.5rem",textAlign:"left",position:"relative",fontFamily:"inherit"}}>
+                <n.icon/>{n.label}
+                {n.id==="upcoming"&&pendingOrders>0&&<span style={{marginLeft:"auto",background:"#f59e0b",color:C.navy,fontSize:"0.65rem",fontWeight:800,borderRadius:"20px",padding:"0 6px",lineHeight:"16px"}}>{pendingOrders}</span>}
+              </button>
+            ))}
+            <div style={{borderTop:"1px solid rgba(255,255,255,0.1)",margin:"0.5rem 0"}}/>
+            <button onClick={()=>{setEditTarget(null);setModal("addUpcoming");setMobileMenu(false);}} style={{padding:"0.7rem 0.9rem",borderRadius:"8px",border:"none",background:"rgba(74,144,217,0.15)",color:C.sky,fontWeight:600,fontSize:"0.82rem",cursor:"pointer",display:"flex",alignItems:"center",gap:"0.5rem",fontFamily:"inherit"}}>
+              <Ic.incoming/>Add Incoming
+            </button>
+            {currentUser.role==="admin"&&<button onClick={()=>{setShowUserMgr(true);setMobileMenu(false);}} style={{padding:"0.7rem 0.9rem",borderRadius:"8px",border:"none",background:"rgba(255,255,255,0.08)",color:"rgba(255,255,255,0.8)",fontWeight:600,fontSize:"0.82rem",cursor:"pointer",display:"flex",alignItems:"center",gap:"0.5rem",fontFamily:"inherit"}}>👥 Users</button>}
+            <div style={{borderTop:"1px solid rgba(255,255,255,0.1)",margin:"0.5rem 0"}}/>
+            <div style={{display:"flex",alignItems:"center",gap:"0.6rem",padding:"0.5rem 0.9rem"}}>
+              <div style={{width:"28px",height:"28px",borderRadius:"50%",background:C.sky,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:"0.8rem"}}>{currentUser.name.charAt(0).toUpperCase()}</div>
+              <div>
+                <div style={{fontSize:"0.82rem",fontWeight:700,color:"#fff"}}>{currentUser.name}</div>
+                <div style={{fontSize:"0.65rem",color:"rgba(255,255,255,0.5)",textTransform:"uppercase"}}>{currentUser.role}</div>
+              </div>
+            </div>
+            <button onClick={()=>{clearSession();setCurrentUser(null);}} style={{padding:"0.7rem 0.9rem",borderRadius:"8px",border:"none",background:"rgba(239,68,68,0.15)",color:"#fca5a5",fontWeight:600,fontSize:"0.82rem",cursor:"pointer",display:"flex",alignItems:"center",gap:"0.5rem",fontFamily:"inherit"}}>
+              🚪 Sign Out
+            </button>
+          </div>
+        </div>
+      )}
+
+      <main style={{padding:isMobile?"0.9rem":"1.4rem 1.5rem",maxWidth:"1400px",margin:"0 auto"}}>
 
         {/* STAT CARDS */}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:"0.9rem",marginBottom:"1.2rem"}}>
+        <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(6,1fr)",gap:"0.75rem",marginBottom:"1.1rem"}}>
           {[
             {label:"Total SKUs",value:String(products.length),color:C.sky,emoji:"📦"},
             {label:"Total Units",value:totalUnits.toLocaleString(),color:C.navy,emoji:"🗃️"},
@@ -830,7 +902,7 @@ export default function App() {
               const daysLeft=exp?Math.ceil((exp-today)/(1000*60*60*24)):null;
               const overdue=daysLeft!==null&&daysLeft<0&&us.status!=="Arrived"&&us.status!=="Cancelled";
               return (
-                <div key={us.id} style={{background:"#fff",borderRadius:"13px",padding:"1rem 1.2rem",boxShadow:"0 2px 12px rgba(27,58,107,0.07)",border:`1.5px solid ${overdue?"#ef444433":cfg.color+"22"}`,display:"grid",gridTemplateColumns:"90px 1fr 180px 80px 120px 130px 120px 130px",alignItems:"center",gap:"0 1rem"}}>
+                <div key={us.id} style={{background:"#fff",borderRadius:"13px",padding:"1rem 1.2rem",boxShadow:"0 2px 12px rgba(27,58,107,0.07)",border:`1.5px solid ${overdue?"#ef444433":cfg.color+"22"}`,display:isMobile?"flex":"grid",flexDirection:isMobile?"column":undefined,gridTemplateColumns:isMobile?undefined:"90px 1fr 180px 80px 120px 130px 120px 130px",alignItems:isMobile?"flex-start":"center",gap:isMobile?"0.5rem":"0 1rem"}}>
                   
                   {/* COL 1 — Status + Overdue */}
                   <div>
@@ -931,7 +1003,7 @@ export default function App() {
         {/* ══ ANALYTICS TAB ══ */}
         {tab==="analytics"&&<>
           <h2 style={{margin:"0 0 1rem",fontFamily:"'DM Sans','Segoe UI',sans-serif",fontSize:"1.1rem",color:C.navy}}>Analytics Overview</h2>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"1rem"}}>
+          <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:"1rem"}}>
             {/* margin health */}
             <div style={{background:"#fff",borderRadius:"13px",padding:"1.1rem",boxShadow:"0 2px 16px rgba(27,58,107,0.08)"}}>
               <h3 style={{margin:"0 0 0.85rem",fontSize:"0.8rem",fontWeight:700,color:C.navy,textTransform:"uppercase",letterSpacing:"0.05em"}}>Margin Health per Product</h3>
@@ -1026,6 +1098,11 @@ export default function App() {
         tbody tr:hover{background:#f5f9ff!important}
         ::-webkit-scrollbar{width:5px;height:5px}
         ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:20px}
+        @media(max-width:767px){
+          table{font-size:0.78rem}
+          th,td{padding:0.5rem 0.55rem!important}
+          .modal-wide{max-width:98vw!important}
+        }
       `}</style>
     </div>
   );

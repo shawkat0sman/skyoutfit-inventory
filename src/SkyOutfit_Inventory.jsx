@@ -14,6 +14,40 @@ function useIsMobile() {
 const STORAGE_KEY = "skyoutfit-inventory-v2";
 const AUTH_KEY    = "skyoutfit-auth-users";
 const SESSION_KEY = "skyoutfit-session";
+const ORDERS_KEY  = "skyoutfit-orders-v1";
+
+function loadOrders() {
+  try { const r = localStorage.getItem(ORDERS_KEY); return r ? JSON.parse(r) : null; } catch { return null; }
+}
+function saveOrders(o) {
+  try { localStorage.setItem(ORDERS_KEY, JSON.stringify(o)); } catch {}
+}
+
+// order helpers
+const ORDER_PLATFORMS = ["Own Store","Daraz","Cartup","WhatsApp/Phone"];
+const ORDER_STATUSES  = ["Pending","Confirmed","Processing","Shipped","Delivered","Cancelled","Returned"];
+const DELIVERY_PARTNERS = ["Pathao","Steadfast","Redx","Sundarban","SA Paribahan","Self Delivery","Pickup"];
+const PAYMENT_METHODS = ["Cash on Delivery","bKash","Nagad","Bank Transfer","Card","Paid Online"];
+
+const ORDER_STATUS_CFG = {
+  "Pending":    {color:"#f59e0b", bg:"#fffbeb"},
+  "Confirmed":  {color:"#4A90D9", bg:"#D6EAFB"},
+  "Processing": {color:"#7c3aed", bg:"#ede9fe"},
+  "Shipped":    {color:"#0369a1", bg:"#e0f2fe"},
+  "Delivered":  {color:"#10b981", bg:"#ecfdf5"},
+  "Cancelled":  {color:"#ef4444", bg:"#fef2f2"},
+  "Returned":   {color:"#dc2626", bg:"#fee2e2"},
+};
+
+const SEED_ORDERS = {
+  orders: [
+    { id:"ORD-001", date:"2025-04-20", platform:"Daraz", customerName:"Fatema Begum", customerPhone:"01711-234567", customerAddress:"House 12, Road 5, Dhanmondi, Dhaka", items:[{productId:"P001",qty:2,unitPrice:520},{productId:"P008",qty:1,unitPrice:320}], totalAmount:1360, discount:0, deliveryCharge:60, paymentMethod:"Cash on Delivery", paymentStatus:"Pending", status:"Shipped", deliveryPartner:"Pathao", trackingId:"PTH-8821", note:"", returnReason:"", createdBy:"admin" },
+    { id:"ORD-002", date:"2025-04-19", platform:"Own Store", customerName:"Rahim Khan", customerPhone:"01812-345678", customerAddress:"Flat 3B, Gulshan-2, Dhaka", items:[{productId:"P003",qty:1,unitPrice:1200}], totalAmount:1200, discount:100, deliveryCharge:80, paymentMethod:"bKash", paymentStatus:"Paid", status:"Delivered", deliveryPartner:"Steadfast", trackingId:"STF-4421", note:"Gift wrap requested", returnReason:"", createdBy:"admin" },
+    { id:"ORD-003", date:"2025-04-21", platform:"WhatsApp/Phone", customerName:"Nusrat Jahan", customerPhone:"01911-456789", customerAddress:"Mirpur-10, Dhaka", items:[{productId:"P005",qty:1,unitPrice:850},{productId:"P007",qty:2,unitPrice:1100}], totalAmount:3050, discount:50, deliveryCharge:70, paymentMethod:"Nagad", paymentStatus:"Paid", status:"Processing", deliveryPartner:"Redx", trackingId:"", note:"", returnReason:"", createdBy:"admin" },
+    { id:"ORD-004", date:"2025-04-18", platform:"Cartup", customerName:"Sumaiya Islam", customerPhone:"01611-567890", customerAddress:"Uttara Sector-7, Dhaka", items:[{productId:"P002",qty:3,unitPrice:620}], totalAmount:1860, discount:0, deliveryCharge:60, paymentMethod:"Cash on Delivery", paymentStatus:"Pending", status:"Cancelled", deliveryPartner:"", trackingId:"", note:"Customer cancelled", returnReason:"Changed mind", createdBy:"admin" },
+  ],
+  nextId: 5,
+};
 
 function loadData() {
   try { const r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : null; } catch { return null; }
@@ -113,6 +147,12 @@ const Ic = {
   x:        ()=><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
   check:    ()=><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>,
   receive:  ()=><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0018 9h-1.26A8 8 0 103 16.29"/></svg>,
+  orders:   ()=><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>,
+  invoice:  ()=><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>,
+  delivery: ()=><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>,
+  retrn:    ()=><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>,
+  user2:    ()=><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+  phone:    ()=><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.12 1.18 2 2 0 012.1.01h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.09a16 16 0 006 6l.45-.45a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>,
 };
 
 // ── UI PRIMITIVES ─────────────────────────────────────────────────────────────
@@ -362,6 +402,543 @@ function TxForm({products,onSave,onClose}) {
   );
 }
 
+
+// ── ORDER UTILITIES ──────────────────────────────────────────────────────────
+function calcOrderTotal(o) {
+  const sub = o.items.reduce((s,i)=>s+(i.qty*i.unitPrice),0);
+  return sub - (o.discount||0) + (o.deliveryCharge||0);
+}
+function getOrderStatusFlow(current) {
+  const flow = ["Pending","Confirmed","Processing","Shipped","Delivered"];
+  const idx = flow.indexOf(current);
+  return { prev: idx>0?flow[idx-1]:null, next: idx<flow.length-1?flow[idx+1]:null };
+}
+function genOrderId(nextId) {
+  return "ORD-" + String(nextId).padStart(3,"0");
+}
+
+// ── ORDER FORM ────────────────────────────────────────────────────────────────
+function OrderForm({ initial, products, onSave, onClose }) {
+  const today = new Date().toISOString().split("T")[0];
+  const blank = {
+    date: today, platform:"Own Store", customerName:"", customerPhone:"", customerAddress:"",
+    items:[{productId:products[0]?.id||"", qty:1, unitPrice:products[0]?.price||0}],
+    discount:0, deliveryCharge:60, paymentMethod:"Cash on Delivery", paymentStatus:"Pending",
+    status:"Pending", deliveryPartner:"Pathao", trackingId:"", note:""
+  };
+  const [f,setF] = useState(initial?{...initial,items:initial.items.map(i=>({...i}))}:blank);
+  const set=(k,v)=>setF(p=>({...p,[k]:v}));
+
+  const addItem=()=>setF(p=>({...p,items:[...p.items,{productId:products[0]?.id||"",qty:1,unitPrice:products[0]?.price||0}]}));
+  const removeItem=i=>setF(p=>({...p,items:p.items.filter((_,idx)=>idx!==i)}));
+  const setItem=(i,k,v)=>setF(p=>({...p,items:p.items.map((it,idx)=>{
+    if(idx!==i)return it;
+    if(k==="productId"){const prod=products.find(pr=>pr.id===v);return {...it,productId:v,unitPrice:prod?prod.price:it.unitPrice};}
+    return {...it,[k]:k==="qty"||k==="unitPrice"?+v:v};
+  })}));
+
+  const subtotal=f.items.reduce((s,i)=>s+(i.qty*i.unitPrice),0);
+  const total=subtotal-(f.discount||0)+(f.deliveryCharge||0);
+
+  return (
+    <div style={{fontFamily:"'DM Sans',sans-serif"}}>
+      {/* Customer Info */}
+      <div style={{background:"#f8fafc",borderRadius:"10px",padding:"1rem",marginBottom:"1rem",border:"1.5px solid #e8edf5"}}>
+        <div style={{fontSize:"0.7rem",fontWeight:700,color:C.navy,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:"0.7rem"}}>👤 Customer Info</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 1rem"}}>
+          <Field label="Customer Name"><input style={inp} value={f.customerName} onChange={e=>set("customerName",e.target.value)} placeholder="e.g. Fatema Begum"/></Field>
+          <Field label="Phone"><input style={inp} value={f.customerPhone} onChange={e=>set("customerPhone",e.target.value)} placeholder="01X-XXXXXXXX"/></Field>
+        </div>
+        <Field label="Delivery Address"><input style={inp} value={f.customerAddress} onChange={e=>set("customerAddress",e.target.value)} placeholder="Full address"/></Field>
+      </div>
+
+      {/* Order Info */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 1rem"}}>
+        <Field label="Order Date"><input style={inp} type="date" value={f.date} onChange={e=>set("date",e.target.value)}/></Field>
+        <Field label="Platform">
+          <select style={sel} value={f.platform} onChange={e=>set("platform",e.target.value)}>
+            {ORDER_PLATFORMS.map(p=><option key={p}>{p}</option>)}
+          </select>
+        </Field>
+        <Field label="Payment Method">
+          <select style={sel} value={f.paymentMethod} onChange={e=>set("paymentMethod",e.target.value)}>
+            {PAYMENT_METHODS.map(p=><option key={p}>{p}</option>)}
+          </select>
+        </Field>
+        <Field label="Payment Status">
+          <select style={sel} value={f.paymentStatus} onChange={e=>set("paymentStatus",e.target.value)}>
+            {["Pending","Paid","Failed","Refunded"].map(p=><option key={p}>{p}</option>)}
+          </select>
+        </Field>
+        <Field label="Delivery Partner">
+          <select style={sel} value={f.deliveryPartner} onChange={e=>set("deliveryPartner",e.target.value)}>
+            {DELIVERY_PARTNERS.map(p=><option key={p}>{p}</option>)}
+          </select>
+        </Field>
+        <Field label="Tracking ID"><input style={inp} value={f.trackingId} onChange={e=>set("trackingId",e.target.value)} placeholder="Optional"/></Field>
+      </div>
+
+      {/* Items */}
+      <div style={{background:"#f8fafc",borderRadius:"10px",padding:"1rem",marginBottom:"1rem",border:"1.5px solid #e8edf5"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.7rem"}}>
+          <div style={{fontSize:"0.7rem",fontWeight:700,color:C.navy,textTransform:"uppercase",letterSpacing:"0.06em"}}>🛍️ Order Items</div>
+          <button onClick={addItem} style={{padding:"3px 10px",background:C.sky,color:"#fff",border:"none",borderRadius:"6px",fontSize:"0.72rem",fontWeight:700,cursor:"pointer"}}>+ Add Item</button>
+        </div>
+        {f.items.map((item,i)=>{
+          const prod=products.find(p=>p.id===item.productId);
+          const avail=prod?prod.stock:0;
+          return (
+            <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 70px 90px 28px",gap:"0.4rem",alignItems:"end",marginBottom:"0.5rem"}}>
+              <div>
+                {i===0&&<label style={{display:"block",fontSize:"0.65rem",fontWeight:700,color:"#64748b",marginBottom:"0.2rem",textTransform:"uppercase"}}>Product</label>}
+                <select style={{...sel,fontSize:"0.8rem"}} value={item.productId} onChange={e=>setItem(i,"productId",e.target.value)}>
+                  {products.map(p=><option key={p.id} value={p.id}>{p.name} (Stock: {p.stock})</option>)}
+                </select>
+              </div>
+              <div>
+                {i===0&&<label style={{display:"block",fontSize:"0.65rem",fontWeight:700,color:"#64748b",marginBottom:"0.2rem",textTransform:"uppercase"}}>Qty</label>}
+                <input style={{...inp,fontSize:"0.82rem",borderColor:item.qty>avail?"#ef4444":"#e2e8f0"}} type="number" min="1" value={item.qty} onChange={e=>setItem(i,"qty",e.target.value)}/>
+              </div>
+              <div>
+                {i===0&&<label style={{display:"block",fontSize:"0.65rem",fontWeight:700,color:"#64748b",marginBottom:"0.2rem",textTransform:"uppercase"}}>Unit Price ৳</label>}
+                <input style={{...inp,fontSize:"0.82rem"}} type="number" value={item.unitPrice} onChange={e=>setItem(i,"unitPrice",e.target.value)}/>
+              </div>
+              <button onClick={()=>removeItem(i)} style={{background:"#fff0f0",border:"none",borderRadius:"6px",padding:"6px",cursor:"pointer",color:"#ef4444",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:"0"}}>
+                <Ic.x/>
+              </button>
+            </div>
+          );
+        })}
+
+        {/* Totals */}
+        <div style={{borderTop:"1.5px solid #e8edf5",marginTop:"0.7rem",paddingTop:"0.7rem",display:"flex",flexDirection:"column",gap:"0.3rem"}}>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:"0.82rem",color:"#475569"}}>
+            <span>Subtotal</span><span style={{fontWeight:600}}>৳{subtotal.toLocaleString()}</span>
+          </div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:"0.82rem",color:"#475569"}}>
+            <span>Discount</span>
+            <input style={{...inp,width:"90px",textAlign:"right",padding:"3px 8px",fontSize:"0.82rem"}} type="number" value={f.discount} onChange={e=>set("discount",+e.target.value)}/>
+          </div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:"0.82rem",color:"#475569"}}>
+            <span>Delivery Charge</span>
+            <input style={{...inp,width:"90px",textAlign:"right",padding:"3px 8px",fontSize:"0.82rem"}} type="number" value={f.deliveryCharge} onChange={e=>set("deliveryCharge",+e.target.value)}/>
+          </div>
+          <div style={{display:"flex",justifyContent:"space-between",fontWeight:800,fontSize:"1rem",color:C.navy,borderTop:"1.5px solid #e8edf5",paddingTop:"0.5rem",marginTop:"0.2rem"}}>
+            <span>Total</span><span>৳{total.toLocaleString()}</span>
+          </div>
+        </div>
+      </div>
+
+      <Field label="Note"><input style={inp} value={f.note} onChange={e=>set("note",e.target.value)} placeholder="Any special instructions…"/></Field>
+
+      <div style={{display:"flex",gap:"0.65rem",marginTop:"0.5rem"}}>
+        <button onClick={()=>onSave(f)} style={{flex:1,padding:"0.68rem",background:C.navy,color:"#fff",border:"none",borderRadius:"8px",fontWeight:700,fontSize:"0.86rem",cursor:"pointer",fontFamily:"inherit"}}>
+          {initial?"Update Order":"Place Order"}
+        </button>
+        <button onClick={onClose} style={{padding:"0.68rem 1.1rem",background:"#f1f5f9",color:"#64748b",border:"none",borderRadius:"8px",cursor:"pointer",fontFamily:"inherit"}}>Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+// ── INVOICE MODAL ─────────────────────────────────────────────────────────────
+function InvoiceModal({ order, products, onClose }) {
+  const items = order.items.map(i=>({...i,product:products.find(p=>p.id===i.productId)}));
+  const subtotal = order.items.reduce((s,i)=>s+(i.qty*i.unitPrice),0);
+  const total = subtotal-(order.discount||0)+(order.deliveryCharge||0);
+  const printInvoice = ()=>{
+    const w=window.open("","_blank");
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice ${order.id}</title><style>
+      body{font-family:'DM Sans',Arial,sans-serif;max-width:600px;margin:30px auto;color:#1e293b;font-size:14px}
+      .header{display:flex;justify-content:space-between;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #1B3A6B}
+      .brand{font-size:22px;font-weight:800;color:#1B3A6B}.brand span{color:#4A90D9}
+      .inv-no{text-align:right;color:#64748b;font-size:12px}
+      .section{margin-bottom:16px}.section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#94a3b8;margin-bottom:6px}
+      table{width:100%;border-collapse:collapse}th{background:#f8fafc;padding:8px 10px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1.5px solid #e2e8f0}
+      td{padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:13px}
+      .total-row{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;color:#475569}
+      .grand-total{font-size:16px;font-weight:800;color:#1B3A6B;border-top:2px solid #1B3A6B;padding-top:8px;margin-top:4px}
+      .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700}
+      .footer{margin-top:30px;text-align:center;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px}
+      @media print{body{margin:0}}
+    </style></head><body>
+    <div class="header">
+      <div><div class="brand"><span>SKY</span>OUTFIT</div><div style="font-size:12px;color:#64748b;margin-top:4px">Inventory Management System</div></div>
+      <div class="inv-no"><div style="font-size:16px;font-weight:800;color:#1B3A6B">${order.id}</div><div>Date: ${order.date}</div><div>Platform: ${order.platform}</div></div>
+    </div>
+    <div class="section">
+      <div class="section-title">Customer Details</div>
+      <div style="font-weight:600;font-size:15px">${order.customerName}</div>
+      <div style="color:#64748b">${order.customerPhone}</div>
+      <div style="color:#64748b">${order.customerAddress}</div>
+    </div>
+    <div class="section">
+      <div class="section-title">Order Items</div>
+      <table><thead><tr><th>Product</th><th>SKU</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead><tbody>
+      ${items.map(i=>`<tr><td>${i.product?.name||i.productId}</td><td style="font-family:monospace;font-size:11px">${i.product?.sku||""}</td><td>${i.qty}</td><td>৳${i.unitPrice.toLocaleString()}</td><td>৳${(i.qty*i.unitPrice).toLocaleString()}</td></tr>`).join("")}
+      </tbody></table>
+    </div>
+    <div style="max-width:220px;margin-left:auto">
+      <div class="total-row"><span>Subtotal</span><span>৳${subtotal.toLocaleString()}</span></div>
+      ${order.discount?`<div class="total-row"><span>Discount</span><span style="color:#10b981">-৳${order.discount.toLocaleString()}</span></div>`:""}
+      <div class="total-row"><span>Delivery Charge</span><span>৳${(order.deliveryCharge||0).toLocaleString()}</span></div>
+      <div class="total-row grand-total"><span>Total</span><span>৳${total.toLocaleString()}</span></div>
+    </div>
+    <div style="margin-top:20px;padding:12px;background:#f8fafc;border-radius:8px;display:flex;justify-content:space-between;font-size:12px">
+      <div><span style="color:#94a3b8">Payment:</span> <strong>${order.paymentMethod}</strong> · <span style="color:${order.paymentStatus==="Paid"?"#10b981":"#f59e0b"}">${order.paymentStatus}</span></div>
+      <div><span style="color:#94a3b8">Delivery:</span> <strong>${order.deliveryPartner||"—"}</strong>${order.trackingId?` · ${order.trackingId}`:""}</div>
+      <div><span style="color:#94a3b8">Status:</span> <strong>${order.status}</strong></div>
+    </div>
+    ${order.note?`<div style="margin-top:12px;padding:10px;background:#fffbeb;border-radius:8px;font-size:12px;color:#92400e">📝 ${order.note}</div>`:""}
+    <div class="footer">Thank you for your order! · SkyOutfit · Generated ${new Date().toLocaleString()}</div>
+    </body></html>`);
+    w.document.close();
+    setTimeout(()=>w.print(),400);
+  };
+
+  const SCFG = ORDER_STATUS_CFG[order.status]||ORDER_STATUS_CFG["Pending"];
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(10,20,40,0.72)",backdropFilter:"blur(5px)",zIndex:150,display:"flex",alignItems:"center",justifyContent:"center",padding:"1rem"}}>
+      <div style={{background:"#fff",borderRadius:"14px",width:"100%",maxWidth:"600px",maxHeight:"90vh",overflowY:"auto",boxShadow:"0 30px 70px rgba(10,20,40,0.35)",fontFamily:"'DM Sans',sans-serif"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"1rem 1.4rem",borderBottom:"1.5px solid #e8edf5",position:"sticky",top:0,background:"#fff",zIndex:1}}>
+          <div>
+            <div style={{fontWeight:800,fontSize:"1rem",color:C.navy}}>{order.id}</div>
+            <div style={{fontSize:"0.72rem",color:"#94a3b8"}}>{order.date} · {order.platform}</div>
+          </div>
+          <div style={{display:"flex",gap:"0.5rem",alignItems:"center"}}>
+            <button onClick={printInvoice} style={{padding:"6px 12px",background:"#ecfdf5",color:"#10b981",border:"none",borderRadius:"7px",fontWeight:700,fontSize:"0.76rem",cursor:"pointer",display:"flex",alignItems:"center",gap:"4px"}}>
+              🖨️ Print Invoice
+            </button>
+            <button onClick={onClose} style={{background:"#f1f5f9",border:"none",borderRadius:"6px",padding:"6px 10px",cursor:"pointer",fontSize:"0.8rem",color:"#64748b"}}>✕</button>
+          </div>
+        </div>
+        <div style={{padding:"1.2rem 1.4rem"}}>
+          {/* Status badge */}
+          <div style={{display:"flex",gap:"0.5rem",flexWrap:"wrap",marginBottom:"1rem"}}>
+            <span style={{fontSize:"0.72rem",fontWeight:700,color:SCFG.color,background:SCFG.bg,padding:"3px 10px",borderRadius:"20px"}}>{order.status}</span>
+            <span style={{fontSize:"0.72rem",fontWeight:700,color:order.paymentStatus==="Paid"?"#10b981":"#f59e0b",background:order.paymentStatus==="Paid"?"#ecfdf5":"#fffbeb",padding:"3px 10px",borderRadius:"20px"}}>{order.paymentStatus}</span>
+            <span style={{fontSize:"0.72rem",fontWeight:600,color:"#64748b",background:"#f1f5f9",padding:"3px 10px",borderRadius:"20px"}}>{order.platform}</span>
+          </div>
+
+          {/* Customer */}
+          <div style={{background:"#f8fafc",borderRadius:"10px",padding:"0.9rem",marginBottom:"0.9rem",border:"1.5px solid #e8edf5"}}>
+            <div style={{fontSize:"0.65rem",fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:"0.5rem"}}>Customer</div>
+            <div style={{fontWeight:700,fontSize:"0.95rem",color:"#1e293b"}}>{order.customerName}</div>
+            <div style={{fontSize:"0.8rem",color:"#64748b",marginTop:"2px"}}>{order.customerPhone}</div>
+            <div style={{fontSize:"0.8rem",color:"#64748b"}}>{order.customerAddress}</div>
+          </div>
+
+          {/* Items */}
+          <div style={{background:"#fff",border:"1.5px solid #e8edf5",borderRadius:"10px",overflow:"hidden",marginBottom:"0.9rem"}}>
+            {items.map((item,i)=>(
+              <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"0.65rem 0.9rem",borderBottom:i<items.length-1?"1px solid #f1f5f9":"none",background:i%2===0?"#fff":"#fafbfd"}}>
+                <div>
+                  <div style={{fontWeight:600,fontSize:"0.84rem",color:"#1e293b"}}>{item.product?.name||item.productId}</div>
+                  <div style={{fontSize:"0.7rem",color:"#94a3b8"}}>{item.product?.sku} · qty: {item.qty}</div>
+                </div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{fontWeight:700,color:C.navy}}>৳{(item.qty*item.unitPrice).toLocaleString()}</div>
+                  <div style={{fontSize:"0.7rem",color:"#94a3b8"}}>৳{item.unitPrice}/unit</div>
+                </div>
+              </div>
+            ))}
+            <div style={{padding:"0.65rem 0.9rem",background:"#f8fafc",display:"flex",flexDirection:"column",gap:"0.25rem"}}>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:"0.8rem",color:"#64748b"}}><span>Subtotal</span><span>৳{subtotal.toLocaleString()}</span></div>
+              {order.discount>0&&<div style={{display:"flex",justifyContent:"space-between",fontSize:"0.8rem",color:"#10b981"}}><span>Discount</span><span>-৳{order.discount.toLocaleString()}</span></div>}
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:"0.8rem",color:"#64748b"}}><span>Delivery Charge</span><span>৳{(order.deliveryCharge||0).toLocaleString()}</span></div>
+              <div style={{display:"flex",justifyContent:"space-between",fontWeight:800,fontSize:"1rem",color:C.navy,borderTop:"1.5px solid #e2e8f0",paddingTop:"0.45rem",marginTop:"0.2rem"}}><span>Total</span><span>৳{total.toLocaleString()}</span></div>
+            </div>
+          </div>
+
+          {/* Delivery info */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0.6rem",marginBottom:"0.9rem"}}>
+            <div style={{background:"#f8fafc",borderRadius:"9px",padding:"0.7rem 0.9rem"}}>
+              <div style={{fontSize:"0.65rem",fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:"3px"}}>Delivery Partner</div>
+              <div style={{fontWeight:600,color:"#1e293b",fontSize:"0.86rem"}}>{order.deliveryPartner||"—"}</div>
+              {order.trackingId&&<div style={{fontSize:"0.72rem",color:C.sky,marginTop:"2px"}}>#{order.trackingId}</div>}
+            </div>
+            <div style={{background:"#f8fafc",borderRadius:"9px",padding:"0.7rem 0.9rem"}}>
+              <div style={{fontSize:"0.65rem",fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:"3px"}}>Payment</div>
+              <div style={{fontWeight:600,color:"#1e293b",fontSize:"0.86rem"}}>{order.paymentMethod}</div>
+              <div style={{fontSize:"0.72rem",color:order.paymentStatus==="Paid"?"#10b981":"#f59e0b",fontWeight:700}}>{order.paymentStatus}</div>
+            </div>
+          </div>
+
+          {order.note&&<div style={{background:"#fffbeb",border:"1.5px solid #fcd34d",borderRadius:"9px",padding:"0.7rem 0.9rem",fontSize:"0.8rem",color:"#92400e",marginBottom:"0.9rem"}}>📝 {order.note}</div>}
+          {order.returnReason&&<div style={{background:"#fef2f2",border:"1.5px solid #fecaca",borderRadius:"9px",padding:"0.7rem 0.9rem",fontSize:"0.8rem",color:"#dc2626"}}>↩️ Return reason: {order.returnReason}</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── ORDERS TAB ─────────────────────────────────────────────────────────────────
+function OrdersTab({ products, inventoryData, setInventoryData, showToast, currentUser }) {
+  const [ordersData, setOrdersData] = useState(()=>{
+    const saved = loadOrders();
+    return saved || SEED_ORDERS;
+  });
+  const [search, setSearch]         = useState("");
+  const [filterStatus, setFilterStatus] = useState("All");
+  const [filterPlatform, setFilterPlatform] = useState("All");
+  const [modal, setModal]           = useState(null); // "add"|"edit"|"invoice"|"return"
+  const [editTarget, setEditTarget] = useState(null);
+  const [invoiceOrder, setInvoiceOrder] = useState(null);
+  const [returnOrder, setReturnOrder] = useState(null);
+  const [returnReason, setReturnReason] = useState("");
+
+  useEffect(()=>{ saveOrders(ordersData); },[ordersData]);
+
+  const { orders, nextId } = ordersData;
+
+  // stats
+  const todayStr = new Date().toISOString().split("T")[0];
+  const todayOrders = orders.filter(o=>o.date===todayStr).length;
+  const pendingOrders = orders.filter(o=>o.status==="Pending"||o.status==="Confirmed"||o.status==="Processing").length;
+  const totalRevenue = orders.filter(o=>o.status!=="Cancelled"&&o.status!=="Returned").reduce((s,o)=>s+calcOrderTotal(o),0);
+  const todayRevenue = orders.filter(o=>o.date===todayStr&&o.status!=="Cancelled"&&o.status!=="Returned").reduce((s,o)=>s+calcOrderTotal(o),0);
+  const returnedOrders = orders.filter(o=>o.status==="Returned").length;
+
+  const filtered = orders.filter(o=>{
+    const ms = o.customerName.toLowerCase().includes(search.toLowerCase()) ||
+               o.id.toLowerCase().includes(search.toLowerCase()) ||
+               (o.customerPhone||"").includes(search);
+    const mst = filterStatus==="All"||o.status===filterStatus;
+    const mpl = filterPlatform==="All"||o.platform===filterPlatform;
+    return ms&&mst&&mpl;
+  }).sort((a,b)=>b.id.localeCompare(a.id));
+
+  const saveOrder = (f) => {
+    if(editTarget) {
+      // editing — don't re-deduct stock
+      setOrdersData(d=>({...d, orders:d.orders.map(o=>o.id===editTarget.id?{...f,id:o.id,createdBy:o.createdBy}:o)}));
+      showToast("Order updated!");
+    } else {
+      // new order — deduct stock from inventory
+      const newId = genOrderId(nextId);
+      const newOrder = {...f, id:newId, createdBy:currentUser.username};
+      setOrdersData(d=>({...d, orders:[newOrder,...d.orders], nextId:d.nextId+1}));
+      // deduct stock
+      setInventoryData(inv=>{
+        let updated = {...inv, products:[...inv.products]};
+        f.items.forEach(item=>{
+          updated.products = updated.products.map(p=>
+            p.id===item.productId ? {...p, stock:Math.max(0,p.stock-item.qty)} : p
+          );
+        });
+        // add transactions
+        const txs = f.items.map((item,i)=>({
+          id:"T"+String(inv.nextTxId+i).padStart(3,"0"),
+          type:"sale", productId:item.productId, qty:item.qty,
+          platform:f.platform, date:f.date, note:`Order ${newId}`
+        }));
+        updated.transactions = [...txs, ...inv.transactions];
+        updated.nextTxId = inv.nextTxId + f.items.length;
+        return updated;
+      });
+      showToast("Order placed! Stock updated.");
+    }
+    setModal(null); setEditTarget(null);
+  };
+
+  const updateStatus = (orderId, newStatus) => {
+    setOrdersData(d=>({...d, orders:d.orders.map(o=>o.id===orderId?{...o,status:newStatus}:o)}));
+    showToast(`Status → ${newStatus}`);
+  };
+
+  const updatePayment = (orderId, newPayStatus) => {
+    setOrdersData(d=>({...d, orders:d.orders.map(o=>o.id===orderId?{...o,paymentStatus:newPayStatus}:o)}));
+    showToast(`Payment → ${newPayStatus}`);
+  };
+
+  const handleReturn = () => {
+    if(!returnReason.trim()){showToast("Please enter return reason","error");return;}
+    setOrdersData(d=>({...d, orders:d.orders.map(o=>o.id===returnOrder.id?{...o,status:"Returned",returnReason}:o)}));
+    // restore stock
+    setInventoryData(inv=>{
+      let updated={...inv,products:[...inv.products]};
+      returnOrder.items.forEach(item=>{
+        updated.products=updated.products.map(p=>p.id===item.productId?{...p,stock:p.stock+item.qty}:p);
+      });
+      const txs=returnOrder.items.map((item,i)=>({
+        id:"T"+String(inv.nextTxId+i).padStart(3,"0"),
+        type:"restock",productId:item.productId,qty:item.qty,
+        platform:"Return",date:new Date().toISOString().split("T")[0],note:`Return ${returnOrder.id}`
+      }));
+      updated.transactions=[...txs,...inv.transactions];
+      updated.nextTxId=inv.nextTxId+returnOrder.items.length;
+      return updated;
+    });
+    setReturnOrder(null); setReturnReason(""); showToast("Return processed. Stock restored.");
+  };
+
+  const deleteOrder = (id) => {
+    if(!confirm("Delete this order?"))return;
+    setOrdersData(d=>({...d,orders:d.orders.filter(o=>o.id!==id)}));
+    showToast("Order deleted.","info");
+  };
+
+  const PLAT_COLORS = {"Own Store":C.sky,"Daraz":"#FF6633","Cartup":"#10b981","WhatsApp/Phone":"#25d366"};
+
+  return (
+    <div>
+      {/* Stats row */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:"0.8rem",marginBottom:"1.1rem"}}>
+        {[
+          {label:"Total Orders",value:orders.length,color:C.navy,emoji:"📋"},
+          {label:"Active",value:pendingOrders,color:"#f59e0b",emoji:"⏳"},
+          {label:"Today's Orders",value:todayOrders,color:C.sky,emoji:"📅"},
+          {label:"Total Revenue",value:`৳${(totalRevenue/1000).toFixed(1)}k`,color:"#10b981",emoji:"💰"},
+          {label:"Returns",value:returnedOrders,color:"#ef4444",emoji:"↩️"},
+        ].map((s,i)=>(
+          <div key={i} style={{background:"#fff",borderRadius:"11px",padding:"0.9rem 1rem",boxShadow:"0 2px 12px rgba(27,58,107,0.07)",display:"flex",flexDirection:"column",gap:"0"}}>
+            <div style={{fontSize:"1.05rem",marginBottom:"0.3rem"}}>{s.emoji}</div>
+            <div style={{fontSize:"1.3rem",fontWeight:800,color:s.color,lineHeight:1}}>{s.value}</div>
+            <div style={{fontSize:"0.67rem",fontWeight:500,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.06em",marginTop:"0.3rem"}}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Filters + Add */}
+      <div style={{display:"flex",gap:"0.6rem",marginBottom:"0.9rem",flexWrap:"wrap"}}>
+        <div style={{flex:1,minWidth:"160px",position:"relative"}}>
+          <span style={{position:"absolute",left:"9px",top:"50%",transform:"translateY(-50%)",color:"#94a3b8"}}><Ic.search/></span>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search order, customer…" style={{...inp,paddingLeft:"1.9rem",background:"#fff"}}/>
+        </div>
+        <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} style={{...sel,width:"auto",background:"#fff"}}>
+          <option>All</option>{ORDER_STATUSES.map(s=><option key={s}>{s}</option>)}
+        </select>
+        <select value={filterPlatform} onChange={e=>setFilterPlatform(e.target.value)} style={{...sel,width:"auto",background:"#fff"}}>
+          <option>All</option>{ORDER_PLATFORMS.map(p=><option key={p}>{p}</option>)}
+        </select>
+        <button onClick={()=>{setEditTarget(null);setModal("add");}} style={{padding:"0.52rem 1rem",background:C.navy,color:"#fff",border:"none",borderRadius:"8px",fontWeight:700,fontSize:"0.8rem",cursor:"pointer",display:"flex",alignItems:"center",gap:"0.35rem"}}>
+          <Ic.plus/>New Order
+        </button>
+      </div>
+
+      {/* Status filter pills */}
+      <div style={{display:"flex",gap:"0.45rem",marginBottom:"0.9rem",flexWrap:"wrap"}}>
+        {Object.entries(ORDER_STATUS_CFG).map(([s,cfg])=>{
+          const cnt=orders.filter(o=>o.status===s).length;
+          return <div key={s} style={{background:"#fff",borderRadius:"8px",padding:"0.4rem 0.75rem",border:`1.5px solid ${cfg.color}33`,display:"flex",alignItems:"center",gap:"0.4rem",cursor:"pointer",boxShadow:filterStatus===s?"0 0 0 2px "+cfg.color:"none"}} onClick={()=>setFilterStatus(filterStatus===s?"All":s)}>
+            <span style={{width:"7px",height:"7px",borderRadius:"50%",background:cfg.color,flexShrink:0}}/>
+            <span style={{fontSize:"0.75rem",fontWeight:600,color:cfg.color}}>{s}</span>
+            <span style={{fontWeight:800,color:cfg.color,fontSize:"0.85rem"}}>{cnt}</span>
+          </div>;
+        })}
+      </div>
+
+      {/* Orders list */}
+      <div style={{display:"flex",flexDirection:"column",gap:"0.6rem"}}>
+        {filtered.length===0&&<div style={{background:"#fff",borderRadius:"13px",padding:"2.5rem",textAlign:"center",color:"#94a3b8"}}>No orders found.</div>}
+        {filtered.map(order=>{
+          const scfg=ORDER_STATUS_CFG[order.status]||ORDER_STATUS_CFG["Pending"];
+          const total=calcOrderTotal(order);
+          const sf=getOrderStatusFlow(order.status);
+          const platColor=PLAT_COLORS[order.platform]||C.sky;
+          const itemsCount=order.items.reduce((s,i)=>s+i.qty,0);
+          return (
+            <div key={order.id} style={{background:"#fff",borderRadius:"13px",padding:"0.9rem 1.1rem",boxShadow:"0 2px 12px rgba(27,58,107,0.07)",border:`1.5px solid ${scfg.color}22`}}>
+              <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",flexWrap:"wrap",gap:"0.5rem"}}>
+                {/* Left: ID + customer */}
+                <div style={{display:"flex",gap:"0.85rem",alignItems:"flex-start"}}>
+                  <div>
+                    <div style={{display:"flex",gap:"0.4rem",alignItems:"center",marginBottom:"2px"}}>
+                      <span style={{fontWeight:800,fontSize:"0.9rem",color:C.navy}}>{order.id}</span>
+                      <span style={{fontSize:"0.68rem",fontWeight:700,color:scfg.color,background:scfg.bg,padding:"1px 7px",borderRadius:"20px"}}>{order.status}</span>
+                      <span style={{fontSize:"0.68rem",fontWeight:700,color:order.paymentStatus==="Paid"?"#10b981":"#f59e0b",background:order.paymentStatus==="Paid"?"#ecfdf5":"#fffbeb",padding:"1px 7px",borderRadius:"20px"}}>{order.paymentStatus}</span>
+                      <span style={{fontSize:"0.68rem",fontWeight:700,color:platColor,background:platColor+"18",padding:"1px 7px",borderRadius:"20px"}}>{order.platform}</span>
+                    </div>
+                    <div style={{display:"flex",gap:"0.5rem",alignItems:"center"}}>
+                      <span style={{fontWeight:700,fontSize:"0.86rem",color:"#1e293b"}}>{order.customerName}</span>
+                      <span style={{fontSize:"0.75rem",color:"#94a3b8"}}>{order.customerPhone}</span>
+                    </div>
+                    <div style={{fontSize:"0.72rem",color:"#94a3b8",marginTop:"1px"}}>{order.date} · {itemsCount} item{itemsCount!==1?"s":""} · {order.deliveryPartner||"No delivery"}{order.trackingId?` #${order.trackingId}`:""}</div>
+                  </div>
+                </div>
+                {/* Right: Amount + actions */}
+                <div style={{display:"flex",gap:"0.5rem",alignItems:"center",flexWrap:"wrap"}}>
+                  <div style={{textAlign:"right",marginRight:"0.3rem"}}>
+                    <div style={{fontWeight:800,fontSize:"1.05rem",color:C.navy}}>৳{total.toLocaleString()}</div>
+                    <div style={{fontSize:"0.68rem",color:"#94a3b8"}}>{order.paymentMethod}</div>
+                  </div>
+                  {/* Status progression buttons */}
+                  {sf.next&&order.status!=="Cancelled"&&order.status!=="Returned"&&(
+                    <button onClick={()=>updateStatus(order.id,sf.next)} style={{padding:"4px 9px",background:ORDER_STATUS_CFG[sf.next]?.bg||"#f0f7ff",color:ORDER_STATUS_CFG[sf.next]?.color||C.sky,border:"none",borderRadius:"7px",fontWeight:700,fontSize:"0.72rem",cursor:"pointer",whiteSpace:"nowrap"}}>
+                      → {sf.next}
+                    </button>
+                  )}
+                  {order.paymentStatus==="Pending"&&order.status!=="Cancelled"&&(
+                    <button onClick={()=>updatePayment(order.id,"Paid")} style={{padding:"4px 9px",background:"#ecfdf5",color:"#10b981",border:"none",borderRadius:"7px",fontWeight:700,fontSize:"0.72rem",cursor:"pointer"}}>
+                      ✓ Mark Paid
+                    </button>
+                  )}
+                  {/* Action buttons */}
+                  <button title="View Invoice" onClick={()=>setInvoiceOrder(order)} style={{padding:"5px",background:"#f0f7ff",border:"none",borderRadius:"6px",cursor:"pointer",color:C.sky,display:"flex"}}><Ic.invoice/></button>
+                  <button title="Edit" onClick={()=>{setEditTarget(order);setModal("edit");}} style={{padding:"5px",background:"#f8fafc",border:"none",borderRadius:"6px",cursor:"pointer",color:"#64748b",display:"flex"}}><Ic.edit/></button>
+                  {order.status==="Delivered"&&(
+                    <button title="Process Return" onClick={()=>{setReturnOrder(order);setReturnReason("");}} style={{padding:"5px",background:"#fff0f0",border:"none",borderRadius:"6px",cursor:"pointer",color:"#ef4444",display:"flex"}}><Ic.retrn/></button>
+                  )}
+                  {order.status!=="Delivered"&&order.status!=="Shipped"&&(
+                    <button title="Cancel Order" onClick={()=>updateStatus(order.id,"Cancelled")} style={{padding:"4px 8px",background:"#fff0f0",border:"none",borderRadius:"6px",cursor:"pointer",color:"#ef4444",fontSize:"0.7rem",fontWeight:700}}>✕</button>
+                  )}
+                  <button title="Delete" onClick={()=>deleteOrder(order.id)} style={{padding:"5px",background:"#fff0f0",border:"none",borderRadius:"6px",cursor:"pointer",color:"#ef4444",display:"flex"}}><Ic.trash/></button>
+                </div>
+              </div>
+              {/* Items preview */}
+              <div style={{marginTop:"0.55rem",display:"flex",gap:"0.35rem",flexWrap:"wrap"}}>
+                {order.items.map((item,i)=>{
+                  const prod=products.find(p=>p.id===item.productId);
+                  return <span key={i} style={{fontSize:"0.7rem",background:"#f1f5f9",color:"#475569",padding:"2px 8px",borderRadius:"6px"}}>{prod?.name||item.productId} ×{item.qty}</span>;
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Modals */}
+      {(modal==="add"||modal==="edit")&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(10,20,40,0.72)",backdropFilter:"blur(5px)",zIndex:100,display:"flex",alignItems:"center",justifyContent:"center",padding:"1rem"}}>
+          <div style={{background:"#fff",borderRadius:"14px",width:"100%",maxWidth:"680px",maxHeight:"92vh",overflowY:"auto",boxShadow:"0 30px 70px rgba(10,20,40,0.35)"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"1.1rem 1.4rem",borderBottom:"1.5px solid #e8edf5",position:"sticky",top:0,background:"#fff",zIndex:1}}>
+              <h3 style={{margin:0,fontSize:"1rem",fontWeight:800,color:C.navy}}>{modal==="edit"?"Edit Order":"New Order"}</h3>
+              <button onClick={()=>{setModal(null);setEditTarget(null);}} style={{background:"#f1f5f9",border:"none",borderRadius:"6px",padding:"6px",cursor:"pointer",display:"flex",color:"#64748b"}}><Ic.x/></button>
+            </div>
+            <div style={{padding:"1.4rem"}}>
+              <OrderForm initial={editTarget} products={products} onSave={saveOrder} onClose={()=>{setModal(null);setEditTarget(null);}}/>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {invoiceOrder&&<InvoiceModal order={invoiceOrder} products={products} onClose={()=>setInvoiceOrder(null)}/>}
+
+      {/* Return modal */}
+      {returnOrder&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(10,20,40,0.72)",backdropFilter:"blur(5px)",zIndex:100,display:"flex",alignItems:"center",justifyContent:"center",padding:"1rem"}}>
+          <div style={{background:"#fff",borderRadius:"14px",width:"100%",maxWidth:"440px",boxShadow:"0 30px 70px rgba(10,20,40,0.35)",fontFamily:"'DM Sans',sans-serif"}}>
+            <div style={{padding:"1.2rem 1.4rem",borderBottom:"1.5px solid #e8edf5"}}>
+              <h3 style={{margin:0,fontSize:"1rem",fontWeight:800,color:"#dc2626"}}>↩️ Process Return — {returnOrder.id}</h3>
+            </div>
+            <div style={{padding:"1.4rem"}}>
+              <div style={{background:"#fef2f2",borderRadius:"9px",padding:"0.8rem",marginBottom:"1rem",fontSize:"0.8rem",color:"#dc2626",border:"1.5px solid #fecaca"}}>
+                ⚠️ Returning this order will restore <strong>{returnOrder.items.reduce((s,i)=>s+i.qty,0)} units</strong> back to inventory.
+              </div>
+              <Field label="Return Reason">
+                <input style={inp} value={returnReason} onChange={e=>setReturnReason(e.target.value)} placeholder="e.g. Wrong size, damaged product…"/>
+              </Field>
+              <div style={{display:"flex",gap:"0.6rem",marginTop:"0.5rem"}}>
+                <button onClick={handleReturn} style={{flex:1,padding:"0.65rem",background:"#dc2626",color:"#fff",border:"none",borderRadius:"8px",fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Confirm Return</button>
+                <button onClick={()=>setReturnOrder(null)} style={{padding:"0.65rem 1rem",background:"#f1f5f9",color:"#64748b",border:"none",borderRadius:"8px",cursor:"pointer",fontFamily:"inherit"}}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ── LOGIN SCREEN ──────────────────────────────────────────────────────────────
 function LoginScreen({ onLogin }) {
@@ -682,6 +1259,7 @@ export default function App() {
 
   const NAV=[
     {id:"inventory",label:"Inventory",icon:Ic.box},
+    {id:"orders",label:"Orders",icon:Ic.orders},
     {id:"upcoming",label:"Upcoming Stock",icon:Ic.incoming},
     {id:"transactions",label:"Transactions",icon:Ic.truck},
     {id:"analytics",label:"Analytics",icon:Ic.chart},
@@ -871,6 +1449,17 @@ export default function App() {
             </div>
           </div>
         </>}
+
+        {/* ══ ORDERS TAB ══ */}
+        {tab==="orders"&&(
+          <OrdersTab
+            products={products}
+            inventoryData={data}
+            setInventoryData={setData}
+            showToast={showToast}
+            currentUser={currentUser}
+          />
+        )}
 
         {/* ══ UPCOMING STOCK TAB ══ */}
         {tab==="upcoming"&&<>
